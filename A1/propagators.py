@@ -119,8 +119,8 @@ def prop_FC(csp, newVar=None):
 
             # iteration through vals in unassigned variable's current domain
             for value in unassigned_var.cur_domain():
-                if not constraint.has_support(unassigned_var, value):
-                    # prunes unsupported value
+                if not constraint.check_var_val(unassigned_var, value):
+                    # prunes unsupported tuples in the constraint
                     unassigned_var.prune_value(value)
                     pruned.append((unassigned_var, value))
 
@@ -157,8 +157,8 @@ def prop_GAC(csp, newVar=None):
         for var in constraint.get_scope():
             # determine if variable's domain has any value supported by the constraint
             for value in var.cur_domain():
-                if not constraint.has_support(var, value):
-                    # prunes value if no support
+                if not constraint.check_var_val(var, value):
+                    # prunes unsupported tuples in the constraint
                     var.prune_value(value)
                     pruned.append((var, value))
 
