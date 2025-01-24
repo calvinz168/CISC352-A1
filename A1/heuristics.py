@@ -1,11 +1,11 @@
 # =============================
-# Student Names:
-# Group ID:
-# Date:
+# Student Names: Alice Fraimovich, Jacob Shin, Calvin Zheng
+# Group ID: 22
+# Date: 2025 Jan 28
 # =============================
 # CISC 352 - W23
-# heuristics.py
-# desc:
+# cagey_csp.py
+# desc: 
 #
 
 
