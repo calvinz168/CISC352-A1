@@ -101,38 +101,34 @@ def prop_FC(csp, newVar=None):
        only one uninstantiated Variable. Keep track of all pruned
        Variable-value pairs and return them.'''
     
-    # Initialize the list of pruned values
+    # list initialization
     pruned = []
 
-    # Determine which constraints to check
+    # checking constraints
     if newVar is None:
-        # If no variable is newly assigned, check all constraints
         constraints_to_check = csp.get_all_cons()
     else:
-        # Otherwise, check only the constraints involving the newly assigned variable
+        # otherwise, checks only constraints with newly assigned variable
         constraints_to_check = csp.get_cons_with_var(newVar)
 
-    # Iterate through the selected constraints
+    # iterates through constraints
     for constraint in constraints_to_check:
-        # Check if exactly one variable in the constraint's scope is unassigned
+        # checks for unassigned variable
         if constraint.get_n_unasgn() == 1:
-            # Retrieve the single unassigned variable
             unassigned_var = constraint.get_unasgn_vars()[0]
 
-            # Iterate through all values in the unassigned variable's current domain
+            # iteration through vals in unassigned variable's current domain
             for value in unassigned_var.cur_domain():
-                # Check if the value has support in the constraint
                 if not constraint.has_support(unassigned_var, value):
-                    # If the value is unsupported, prune it
+                    # prunes unsupported value
                     unassigned_var.prune_value(value)
                     pruned.append((unassigned_var, value))
 
-            # Check if the unassigned variable's domain is now empty
+            # checks if unassigned variable domain is currently empty
             if unassigned_var.cur_domain_size() == 0:
-                # Dead end detected, return False and the list of pruned values
                 return False, pruned
 
-    # Return True and the list of pruned values if no dead ends are detected
+    # if no dead end
     return True, pruned
 
 
@@ -140,40 +136,40 @@ def prop_GAC(csp, newVar=None):
     '''Do GAC propagation. If newVar is None, enforce initial GAC by processing
        all constraints. Otherwise, process constraints containing newVar.'''
     
-    # Initialize the list of pruned values
+    # list initialization of pruned vals
     pruned = []
 
-    # Determine the constraints to check
+    # determines constraints to check
     if newVar is None:
-        # If no new variable is assigned, initialize the GAC queue with all constraints
+        # initializes the GAC queue with all constraints
+        # given that no new var is assigned
         gac_queue = csp.get_all_cons()
     else:
-        # If a new variable is assigned, initialize the GAC queue with all constraints involving that variable
+        # if new variable is assigned
+        # initializes the GAC queue with all constraints involving that var 
         gac_queue = csp.get_cons_with_var(newVar)
 
-    # Process the GAC queue
+    # GAC queue processing
     while gac_queue:
-        # Dequeue a constraint to enforce arc consistency
         constraint = gac_queue.pop(0)
         
-        # For each variable in the constraint's scope, check arc consistency
+        # checks arc consistency
         for var in constraint.get_scope():
-            # Check if the variable's domain has any value supported by the constraint
+            # determine if variable's domain has any value supported by the constraint
             for value in var.cur_domain():
                 if not constraint.has_support(var, value):
-                    # If no support exists, prune the value
+                    # prunes value if no support
                     var.prune_value(value)
                     pruned.append((var, value))
 
-                    # If pruning occurs, add all constraints involving the variable to the queue
+                    # adds all constraints involving the variable to the queue
                     for neighbor in csp.get_cons_with_var(var):
                         if neighbor not in gac_queue:
                             gac_queue.append(neighbor)
 
-            # Check if the domain of the variable is empty after pruning
+            # determines if domain of the var is empty after pruning
             if var.cur_domain_size() == 0:
-                # If a domain becomes empty, return False indicating a dead end
                 return False, pruned
 
-    # If the GAC queue is empty and no dead ends were detected, return True
+    # if GAC queue empty and no dead ends were detected
     return True, pruned
