@@ -160,4 +160,26 @@ def nary_ad_grid(cagey_grid):
 
 def cagey_csp_model(cagey_grid):
     ##IMPLEMENT
-    pass
+     n, cages = cagey_grid
+    csp, var_array = binary_ne_grid(cagey_grid)  # or use nary_ad_grid depending on choice
+
+    # Process each cage
+    for value, cells, op in cages:
+        vars_in_cage = [var_array[i][j] for (i, j) in cells]
+        if op == '+':
+            # Define addition constraint
+            c = Constraint(f"Cage_Add_{cells}", vars_in_cage)
+            c.add_satisfying_tuples(
+                [(tuple(val) for val in zip(*[var.domain() for var in vars_in_cage])) if sum(val) == value else None for val in zip(*[var.domain() for var in vars_in_cage])]
+            )
+            csp.add_constraint(c)
+        elif op == '*':
+            # Define multiplication constraint
+            c = Constraint(f"Cage_Mul_{cells}", vars_in_cage)
+            c.add_satisfying_tuples(
+                [(tuple(val) for val in zip(*[var.domain() for var in vars_in_cage])) if product(val) == value else None for val in zip(*[var.domain() for var in vars_in_cage])]
+            )
+            csp.add_constraint(c)
+        # Handle other operations like subtraction, division, etc.
+
+    return csp, var_array
