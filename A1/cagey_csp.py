@@ -84,15 +84,79 @@ An example of a 3x3 puzzle would be defined as:
 '''
 
 from cspbase import *
+import itertools
+import math
 
 def binary_ne_grid(cagey_grid):
-    ##IMPLEMENT
-    pass
+    '''
+    Create a CSP model of a Cagey grid using binary not-equal constraints for rows and columns.
+    '''
+    n, cages = cagey_grid
+    csp = CSP("Binary Not-Equal Grid")
+    var_array = []
 
+    # Create variables for each cell in the grid
+    for i in range(n):
+        row = []
+        for j in range(n):
+            var = Variable(f"Cell({i+1},{j+1})", list(range(1, n + 1)))
+            csp.add_var(var)
+            row.append(var)
+        var_array.append(row)
+
+    # Add binary not-equal constraints for rows
+    for i in range(n):
+        for j1 in range(n):
+            for j2 in range(j1 + 1, n):
+                con = Constraint(f"Row({i+1})_{j1+1},{j2+1}", [var_array[i][j1], var_array[i][j2]])
+                sat_tuples = [(a, b) for a in range(1, n + 1) for b in range(1, n + 1) if a != b]
+                con.add_satisfying_tuples(sat_tuples)
+                csp.add_constraint(con)
+
+    # Add binary not-equal constraints for columns
+    for j in range(n):
+        for i1 in range(n):
+            for i2 in range(i1 + 1, n):
+                con = Constraint(f"Col({j+1})_{i1+1},{i2+1}", [var_array[i1][j], var_array[i2][j]])
+                sat_tuples = [(a, b) for a in range(1, n + 1) for b in range(1, n + 1) if a != b]
+                con.add_satisfying_tuples(sat_tuples)
+                csp.add_constraint(con)
+
+    return csp, [var for row in var_array for var in row]
 
 def nary_ad_grid(cagey_grid):
-    ## IMPLEMENT
-    pass
+    '''
+    Create a CSP model of a Cagey grid using n-ary all-different constraints for rows and columns.
+    '''
+    n, cages = cagey_grid
+    csp = CSP("N-ary All-Different Grid")
+    var_array = []
+
+    # Create variables for each cell in the grid
+    for i in range(n):
+        row = []
+        for j in range(n):
+            var = Variable(f"Cell({i+1},{j+1})", list(range(1, n + 1)))
+            csp.add_var(var)
+            row.append(var)
+        var_array.append(row)
+
+    # Add n-ary all-different constraints for rows
+    for i in range(n):
+        con = Constraint(f"Row({i+1})", var_array[i])
+        sat_tuples = [tup for tup in itertools.permutations(range(1, n + 1), n)]
+        con.add_satisfying_tuples(sat_tuples)
+        csp.add_constraint(con)
+
+    # Add n-ary all-different constraints for columns
+    for j in range(n):
+        column_vars = [var_array[i][j] for i in range(n)]
+        con = Constraint(f"Col({j+1})", column_vars)
+        sat_tuples = [tup for tup in itertools.permutations(range(1, n + 1), n)]
+        con.add_satisfying_tuples(sat_tuples)
+        csp.add_constraint(con)
+
+    return csp, [var for row in var_array for var in row]
 
 def cagey_csp_model(cagey_grid):
     ##IMPLEMENT
