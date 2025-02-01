@@ -126,30 +126,29 @@ def binary_ne_grid(cagey_grid):
 
 def nary_ad_grid(cagey_grid):
     '''
-    Create a CSP model of a Cagey grid using n-ary all-different constraints for rows and columns.
+    creates CSP model of a Cagey grid
     '''
     n, cages = cagey_grid
     csp = CSP("N-ary All-Different Grid")
     var_array = []
 
-    # Create variables for each cell in the grid
-    for i in range(n):
-        row = []
+    for i in range(n): # creates vars for each cell in grid
+        row = [] # initializes list
         for j in range(n):
             var = Variable(f"Cell({i+1},{j+1})", list(range(1, n + 1)))
             csp.add_var(var)
             row.append(var)
         var_array.append(row)
 
-    # Add n-ary all-different constraints for rows
-    for i in range(n):
+    
+    for i in range(n): # adds n-ary all differing constraints for rows
         con = Constraint(f"Row({i+1})", var_array[i])
         sat_tuples = [tup for tup in itertools.permutations(range(1, n + 1), n)]
         con.add_satisfying_tuples(sat_tuples)
         csp.add_constraint(con)
 
-    # Add n-ary all-different constraints for columns
-    for j in range(n):
+
+    for j in range(n): # adds n-ary all differing constraints for cols
         column_vars = [var_array[i][j] for i in range(n)]
         con = Constraint(f"Col({j+1})", column_vars)
         sat_tuples = [tup for tup in itertools.permutations(range(1, n + 1), n)]
@@ -161,25 +160,21 @@ def nary_ad_grid(cagey_grid):
 def cagey_csp_model(cagey_grid):
     ##IMPLEMENT
      n, cages = cagey_grid
-    csp, var_array = binary_ne_grid(cagey_grid)  # or use nary_ad_grid depending on choice
+    csp, var_array = binary_ne_grid(cagey_grid)  # or nary_ad_grid if needed
 
-    # Process each cage
     for value, cells, op in cages:
         vars_in_cage = [var_array[i][j] for (i, j) in cells]
-        if op == '+':
-            # Define addition constraint
+        if op == '+': # addition constraint
             c = Constraint(f"Cage_Add_{cells}", vars_in_cage)
             c.add_satisfying_tuples(
                 [(tuple(val) for val in zip(*[var.domain() for var in vars_in_cage])) if sum(val) == value else None for val in zip(*[var.domain() for var in vars_in_cage])]
             )
             csp.add_constraint(c)
-        elif op == '*':
-            # Define multiplication constraint
+        elif op == '*': # creates constraint for multiplication
             c = Constraint(f"Cage_Mul_{cells}", vars_in_cage)
             c.add_satisfying_tuples(
                 [(tuple(val) for val in zip(*[var.domain() for var in vars_in_cage])) if product(val) == value else None for val in zip(*[var.domain() for var in vars_in_cage])]
             )
             csp.add_constraint(c)
-        # Handle other operations like subtraction, division, etc.
 
     return csp, var_array
