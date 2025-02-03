@@ -5,10 +5,10 @@
 # =============================
 # CISC 352 - W23
 # cagey_csp.py
-# desc: 
+# desc:
 #
 
-#Look for #IMPLEMENT tags in this file.
+# Look for #IMPLEMENT tags in this file.
 '''
 All models need to return a CSP object, and a list of lists of Variable objects
 representing the board. The returned list of lists is used to access the
@@ -87,6 +87,7 @@ from cspbase import *
 import itertools
 import math
 
+
 def binary_ne_grid(cagey_grid):
     '''
     Create a CSP model of a Cagey grid using binary not-equal constraints for rows and columns.
@@ -95,33 +96,32 @@ def binary_ne_grid(cagey_grid):
     csp = CSP("Binary Not-Equal Grid")
     var_array = []
 
-    
-    for i in range(n): # var for each cell in grid
+    for i in range(n):  # var for each cell in grid
         row = []
         for j in range(n):
-            var = Variable(f"Cell({i+1},{j+1})", list(range(1, n + 1)))
+            var = Variable(f"Cell({i + 1},{j + 1})", list(range(1, n + 1)))
             csp.add_var(var)
             row.append(var)
         var_array.append(row)
 
-    for i in range(n):     # adds binary not-equal constraints for rows
+    for i in range(n):  # adds binary not-equal constraints for rows
         for j1 in range(n):
             for j2 in range(j1 + 1, n):
-                con = Constraint(f"Row({i+1})_{j1+1},{j2+1}", [var_array[i][j1], var_array[i][j2]])
+                con = Constraint(f"Row({i + 1})_{j1 + 1},{j2 + 1}", [var_array[i][j1], var_array[i][j2]])
                 sat_tuples = [(a, b) for a in range(1, n + 1) for b in range(1, n + 1) if a != b]
                 con.add_satisfying_tuples(sat_tuples)
                 csp.add_constraint(con)
 
-    
-    for j in range(n):   # adds binary not-equal constraints for cols
+    for j in range(n):  # adds binary not-equal constraints for cols
         for i1 in range(n):
             for i2 in range(i1 + 1, n):
-                con = Constraint(f"Col({j+1})_{i1+1},{i2+1}", [var_array[i1][j], var_array[i2][j]])
+                con = Constraint(f"Col({j + 1})_{i1 + 1},{i2 + 1}", [var_array[i1][j], var_array[i2][j]])
                 sat_tuples = [(a, b) for a in range(1, n + 1) for b in range(1, n + 1) if a != b]
                 con.add_satisfying_tuples(sat_tuples)
                 csp.add_constraint(con)
 
     return csp, [var for row in var_array for var in row]
+
 
 def nary_ad_grid(cagey_grid):
     '''
@@ -131,39 +131,40 @@ def nary_ad_grid(cagey_grid):
     csp = CSP("N-ary All-Different Grid")
     var_array = []
 
-    for i in range(n): # creates vars for each cell in grid
-        row = [] # initializes list
+    for i in range(n):  # creates vars for each cell in grid
+        row = []  # initializes list
         for j in range(n):
-            var = Variable(f"Cell({i+1},{j+1})", list(range(1, n + 1)))
+            var = Variable(f"Cell({i + 1},{j + 1})", list(range(1, n + 1)))
             csp.add_var(var)
             row.append(var)
         var_array.append(row)
 
-    
-    for i in range(n): # adds n-ary all differing constraints for rows
-        con = Constraint(f"Row({i+1})", var_array[i])
+    for i in range(n):  # adds n-ary all differing constraints for rows
+        con = Constraint(f"Row({i + 1})", var_array[i])
         sat_tuples = [tup for tup in itertools.permutations(range(1, n + 1), n)]
         con.add_satisfying_tuples(sat_tuples)
         csp.add_constraint(con)
 
-
-    for j in range(n): # adds n-ary all differing constraints for cols
+    for j in range(n):  # adds n-ary all differing constraints for cols
         column_vars = [var_array[i][j] for i in range(n)]
-        con = Constraint(f"Col({j+1})", column_vars)
+        con = Constraint(f"Col({j + 1})", column_vars)
         sat_tuples = [tup for tup in itertools.permutations(range(1, n + 1), n)]
         con.add_satisfying_tuples(sat_tuples)
         csp.add_constraint(con)
 
     return csp, [var for row in var_array for var in row]
 
+
 def cagey_csp_model(cagey_grid):
-    ##IMPLEMENT
-     n, cages = cagey_grid
-    csp, var_array = binary_ne_grid(cagey_grid)  # or nary_ad_grid if needed
+    n, cages = cagey_grid  # Extract the grid size and cage constraints
+
+    csp, var_array = binary_ne_grid(cagey_grid)  # or nary_ad_grid(cagey_grid) if needed
 
     for value, cells, op in cages:
+        # Get the variables corresponding to the cells in the cage
         vars_in_cage = [var_array[i][j] for (i, j) in cells]
-        if op == '+': # addition constraint
+
+        if op == '+':
             c = Constraint(f"Cage_Add_{cells}", vars_in_cage)
             sat_tuples = []
             for val_tuple in itertools.product(*[var.domain() for var in vars_in_cage]):
@@ -171,7 +172,8 @@ def cagey_csp_model(cagey_grid):
                     sat_tuples.append(val_tuple)
             c.add_satisfying_tuples(sat_tuples)
             csp.add_constraint(c)
-        elif op == '*': # creates constraint for multiplication
+
+        elif op == '*':
             c = Constraint(f"Cage_Mul_{cells}", vars_in_cage)
             sat_tuples = []
             for val_tuple in itertools.product(*[var.domain() for var in vars_in_cage]):
@@ -179,6 +181,7 @@ def cagey_csp_model(cagey_grid):
                     sat_tuples.append(val_tuple)
             c.add_satisfying_tuples(sat_tuples)
             csp.add_constraint(c)
+
         elif op == '-':
             c = Constraint(f"Cage_Sub_{cells}", vars_in_cage)
             sat_tuples = []
@@ -187,6 +190,7 @@ def cagey_csp_model(cagey_grid):
                     sat_tuples.append(val_tuple)
             c.add_satisfying_tuples(sat_tuples)
             csp.add_constraint(c)
+
         elif op == '/':
             c = Constraint(f"Cage_Div_{cells}", vars_in_cage)
             sat_tuples = []
