@@ -165,15 +165,35 @@ def cagey_csp_model(cagey_grid):
         vars_in_cage = [var_array[i][j] for (i, j) in cells]
         if op == '+': # addition constraint
             c = Constraint(f"Cage_Add_{cells}", vars_in_cage)
-            c.add_satisfying_tuples(
-                [(tuple(val) for val in zip(*[var.domain() for var in vars_in_cage])) if sum(val) == value else None for val in zip(*[var.domain() for var in vars_in_cage])]
-            )
+            sat_tuples = []
+            for val_tuple in itertools.product(*[var.domain() for var in vars_in_cage]):
+                if sum(val_tuple) == value:
+                    sat_tuples.append(val_tuple)
+            c.add_satisfying_tuples(sat_tuples)
             csp.add_constraint(c)
         elif op == '*': # creates constraint for multiplication
             c = Constraint(f"Cage_Mul_{cells}", vars_in_cage)
-            c.add_satisfying_tuples(
-                [(tuple(val) for val in zip(*[var.domain() for var in vars_in_cage])) if product(val) == value else None for val in zip(*[var.domain() for var in vars_in_cage])]
-            )
+            sat_tuples = []
+            for val_tuple in itertools.product(*[var.domain() for var in vars_in_cage]):
+                if math.prod(val_tuple) == value:
+                    sat_tuples.append(val_tuple)
+            c.add_satisfying_tuples(sat_tuples)
+            csp.add_constraint(c)
+        elif op == '-':
+            c = Constraint(f"Cage_Sub_{cells}", vars_in_cage)
+            sat_tuples = []
+            for val_tuple in itertools.product(*[var.domain() for var in vars_in_cage]):
+                if abs(val_tuple[0] - val_tuple[1]) == value:
+                    sat_tuples.append(val_tuple)
+            c.add_satisfying_tuples(sat_tuples)
+            csp.add_constraint(c)
+        elif op == '/':
+            c = Constraint(f"Cage_Div_{cells}", vars_in_cage)
+            sat_tuples = []
+            for val_tuple in itertools.product(*[var.domain() for var in vars_in_cage]):
+                if val_tuple[0] / val_tuple[1] == value:
+                    sat_tuples.append(val_tuple)
+            c.add_satisfying_tuples(sat_tuples)
             csp.add_constraint(c)
 
     return csp, var_array
