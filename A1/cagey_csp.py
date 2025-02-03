@@ -156,44 +156,107 @@ def nary_ad_grid(cagey_grid):
 
     return csp, [var for row in var_array for var in row]
 
-def cagey_csp_model(cagey_grid):
-    ##IMPLEMENT
-     n, cages = cagey_grid
-    csp, var_array = binary_ne_grid(cagey_grid)  # or nary_ad_grid if needed
 
-    for value, cells, op in cages:
-        vars_in_cage = [var_array[i][j] for (i, j) in cells]
-        if op == '+': # addition constraint
-            c = Constraint(f"Cage_Add_{cells}", vars_in_cage)
-            sat_tuples = []
-            for val_tuple in itertools.product(*[var.domain() for var in vars_in_cage]):
-                if sum(val_tuple) == value:
-                    sat_tuples.append(val_tuple)
-            c.add_satisfying_tuples(sat_tuples)
-            csp.add_constraint(c)
-        elif op == '*': # creates constraint for multiplication
-            c = Constraint(f"Cage_Mul_{cells}", vars_in_cage)
-            sat_tuples = []
-            for val_tuple in itertools.product(*[var.domain() for var in vars_in_cage]):
-                if math.prod(val_tuple) == value:
-                    sat_tuples.append(val_tuple)
-            c.add_satisfying_tuples(sat_tuples)
-            csp.add_constraint(c)
-        elif op == '-':
-            c = Constraint(f"Cage_Sub_{cells}", vars_in_cage)
-            sat_tuples = []
-            for val_tuple in itertools.product(*[var.domain() for var in vars_in_cage]):
-                if abs(val_tuple[0] - val_tuple[1]) == value:
-                    sat_tuples.append(val_tuple)
-            c.add_satisfying_tuples(sat_tuples)
-            csp.add_constraint(c)
-        elif op == '/':
-            c = Constraint(f"Cage_Div_{cells}", vars_in_cage)
-            sat_tuples = []
-            for val_tuple in itertools.product(*[var.domain() for var in vars_in_cage]):
-                if val_tuple[0] / val_tuple[1] == value:
-                    sat_tuples.append(val_tuple)
-            c.add_satisfying_tuples(sat_tuples)
-            csp.add_constraint(c)
+def cagey_csp_model(board):
+    """
+    This function converts the input board into a CSP model.
+    """
+    variables = []  # Will hold variables in the CSP
+    var_dict = {}  # To map variable names to their domains
+    
+    # Unpack the board
+    size, cages = board  # Assuming board is of the form (size, list_of_cages)
 
-    return csp, var_array
+    # Create a list of variables from the cages
+    for cage in cages:
+        num_cells, cells, operator = cage  # Unpacking each cage
+        var_names = [Variable(f"cage_{x},{y}") for x, y in cells]  # Create Variable instances
+        domain = list(range(1, 10))  # Domain for each variable (1-9)
+        
+        # Map each variable to its domain
+        for var in var_names:
+            var_dict[var.name] = domain
+        
+        # Add to the variable list
+        target = None  # Placeholder; modify as needed based on your actual board structure
+        variables.append((var_names, operator, target))
+
+    constraints = []  # Constraints to be added to CSP
+
+    # Create constraints based on the operator
+    for var_names, operator, target in variables:
+        if operator == "+":
+            constraint = create_sum_constraint(var_names, target)
+        elif operator == "-":
+            constraint = create_difference_constraint(var_names, target)
+        elif operator == "*":
+            constraint = create_multiplication_constraint(var_names, target)
+        elif operator == "/":
+            constraint = create_division_constraint(var_names, target)
+        else:
+            raise ValueError(f"Unsupported operator {operator}")
+        
+        constraints.append(constraint)
+
+    # Create the CSP with the variables and constraints
+    csp = CSP(var_dict)
+    for constraint in constraints:
+        csp.add_constraint(constraint)
+
+    return csp, variables
+
+
+def create_sum_constraint(var_names, target_sum):
+    """
+    Creates a sum constraint for the given variables.
+    """
+    satisfying_tuples = []
+    for combination in itertools.product(range(1, 10), repeat=len(var_names)):
+        if sum(combination) == target_sum:
+            satisfying_tuples.append(combination)
+    
+    constraint = Constraint("sum", var_names)
+    constraint.add_satisfying_tuples(satisfying_tuples)
+    return constraint
+
+
+def create_difference_constraint(var_names, target_difference):
+    """
+    Creates a difference constraint for the given variables.
+    """
+    satisfying_tuples = []
+    for combination in itertools.product(range(1, 10), repeat=len(var_names)):
+        if abs(combination[0] - combination[1]) == target_difference:
+            satisfying_tuples.append(combination)
+    
+    constraint = Constraint("difference", var_names)
+    constraint.add_satisfying_tuples(satisfying_tuples)
+    return constraint
+
+
+def create_multiplication_constraint(var_names, target_product):
+    """
+    Creates a multiplication constraint for the given variables.
+    """
+    satisfying_tuples = []
+    for combination in itertools.product(range(1, 10), repeat=len(var_names)):
+        if math.prod(combination) == target_product:
+            satisfying_tuples.append(combination)
+    
+    constraint = Constraint("multiplication", var_names)
+    constraint.add_satisfying_tuples(satisfying_tuples)
+    return constraint
+
+
+def create_division_constraint(var_names, target_quotient):
+    """
+    Creates a division constraint for the given variables.
+    """
+    satisfying_tuples = []
+    for combination in itertools.product(range(1, 10), repeat=len(var_names)):
+        if combination[1] != 0 and combination[0] / combination[1] == target_quotient:
+            satisfying_tuples.append(combination)
+    
+    constraint = Constraint("division", var_names)
+    constraint.add_satisfying_tuples(satisfying_tuples)
+    return constraint
