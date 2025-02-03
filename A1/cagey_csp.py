@@ -156,12 +156,10 @@ def nary_ad_grid(cagey_grid):
 
 
 def cagey_csp_model(cagey_grid):
-    n, cages = cagey_grid  # Extract the grid size and cage constraints
-
-    csp, var_array = binary_ne_grid(cagey_grid)  # or nary_ad_grid(cagey_grid) if needed
+    n, cages = cagey_grid  
+    csp, var_array = binary_ne_grid(cagey_grid)  
 
     for value, cells, op in cages:
-        # Get the variables corresponding to the cells in the cage
         vars_in_cage = [var_array[i][j] for (i, j) in cells]
 
         if op == '+':
