@@ -95,8 +95,8 @@ def binary_ne_grid(cagey_grid):
     csp = CSP("Binary Not-Equal Grid")
     var_array = []
 
-    # Create variables for each cell in the grid
-    for i in range(n):
+    
+    for i in range(n): # var for each cell in grid
         row = []
         for j in range(n):
             var = Variable(f"Cell({i+1},{j+1})", list(range(1, n + 1)))
@@ -104,8 +104,7 @@ def binary_ne_grid(cagey_grid):
             row.append(var)
         var_array.append(row)
 
-    # Add binary not-equal constraints for rows
-    for i in range(n):
+    for i in range(n):     # adds binary not-equal constraints for rows
         for j1 in range(n):
             for j2 in range(j1 + 1, n):
                 con = Constraint(f"Row({i+1})_{j1+1},{j2+1}", [var_array[i][j1], var_array[i][j2]])
@@ -113,8 +112,8 @@ def binary_ne_grid(cagey_grid):
                 con.add_satisfying_tuples(sat_tuples)
                 csp.add_constraint(con)
 
-    # Add binary not-equal constraints for columns
-    for j in range(n):
+    
+    for j in range(n):   # adds binary not-equal constraints for cols
         for i1 in range(n):
             for i2 in range(i1 + 1, n):
                 con = Constraint(f"Col({j+1})_{i1+1},{i2+1}", [var_array[i1][j], var_array[i2][j]])
